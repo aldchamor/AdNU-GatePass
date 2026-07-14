@@ -236,7 +236,7 @@ export default {
     return {
       activeNav: 'Dashboard',
       searchQuery: '',
-      userName: localStorage.getItem('user_name') || 'Name',
+      userName: localStorage.getItem('user_email') || 'Name',
       mainNavItems: [
         { label: 'Dashboard', icon: 'IconDashboard' },
         { label: 'Applicants', icon: 'IconApplicants' },
@@ -271,7 +271,7 @@ methods: {
 
             localStorage.removeItem("isLoggedIn");
             localStorage.removeItem("user_email");
-            localStorage.removeItem("user_name");
+            localStorage.removeItem("user_id");
 
             this.$router.push("/login");
 
