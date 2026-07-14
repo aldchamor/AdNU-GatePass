@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { API_BASE_URL } from "../config/api.js";
 
 const router = useRouter();
 const email = ref("");
@@ -26,7 +27,7 @@ const handleSignup = async () => {
 
   try {
     const response = await fetch(
-      "http://localhost:4000/api/v1/accounts/register",
+      `${API_BASE_URL}/api/v1/accounts/register`,
       {
         method: "POST",
         headers: {
