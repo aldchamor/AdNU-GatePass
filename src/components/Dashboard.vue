@@ -44,14 +44,6 @@
 
     <div class="main-wrapper">
       <header class="topbar">
-        <div class="search-bar">
-          <svg class="search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <circle cx="6.5" cy="6.5" r="5.5" stroke="#999" stroke-width="1.5"/>
-            <path d="M11 11l3 3" stroke="#999" stroke-width="1.5" stroke-linecap="round"/>
-          </svg>
-          <input type="text" placeholder="Search here..." v-model="searchQuery" />
-        </div>
-
         <div class="user-info">
           <div class="user-text">
             <span class="user-name">{{ userName }}</span>
