@@ -8,7 +8,7 @@ const app = express();  // create an express app
 
 // Middleware
 app.use(cors({
-    origin: ["http://localhost:5173", "https://ad-nu-gate-pass.vercel.app/"],
+    origin: ["http://localhost:5173", "https://ad-nu-gate-pass.vercel.app"],
     credentials: true
 }));
 
