@@ -1,0 +1,40 @@
+{
+  "name": "admin",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Platform Tech Main",
+  "homepage": "https://github.com/Blezzy08/Platform-Tech#readme",
+  "bugs": {
+    "url": "https://github.com/Blezzy08/Platform-Tech/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Blezzy08/Platform-Tech.git"
+  },
+  "license": "ISC",
+  "author": "admin",
+  "type": "module",
+  "main": "vite.config.js",
+  "scripts": {
+    "start": "node backend/src/index.js",
+    "dev:server": "nodemon backend/src/index.js",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "mongodb": "^7.4.0",
+    "mongoose": "^9.7.3",
+    "nodemon": "^3.1.14",
+    "vue": "^3.5.38",
+    "vue-router": "^5.1.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.7",
+    "vite": "^8.1.0"
+  }
+}
