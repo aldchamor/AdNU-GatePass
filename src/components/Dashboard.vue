@@ -89,7 +89,26 @@
             </div>
           </div>
 
-          <div class="dashboard-panel"></div>
+          <div class="dashboard-panel">
+            <h3 class="panel-title">Recent Activity</h3>
+            <div v-if="auditLogs.length === 0" class="panel-empty">
+              No activity yet.
+            </div>
+            <ul v-else class="audit-log-list">
+              <li
+                v-for="log in auditLogs"
+                :key="log.id"
+                class="audit-log-item"
+              >
+                <span
+                  class="audit-log-dot"
+                  :class="log.action === 'Approved' ? 'approved' : 'rejected'"
+                ></span>
+                <span class="audit-log-message">{{ log.message }}</span>
+                <span class="audit-log-date">{{ log.date }}</span>
+              </li>
+            </ul>
+          </div>
         </template>
 
         <template v-else-if="activeNav === 'Applicants'">
@@ -246,14 +265,62 @@ export default {
         { label: 'Help', icon: 'IconHelp' },
       ],
       statCards: [
-        { label: 'Pending Review', value: 12, type: 'pending', icon: 'IconAlert' },
-        { label: 'APPROVED', value: 10, type: 'approved', icon: 'IconCheck' },
-        { label: 'RESUBMIT', value: 2, type: 'resubmit', icon: 'IconX' },
-        { label: 'TOTAL APPLICANTS', value: 15, type: 'total', icon: 'IconPeople' },
-      ]
+        { label: 'Pending Review', value: 0, type: 'pending', icon: 'IconAlert' },
+        { label: 'APPROVED', value: 0, type: 'approved', icon: 'IconCheck' },
+        { label: 'RESUBMIT', value: 0, type: 'resubmit', icon: 'IconX' },
+        { label: 'TOTAL APPLICANTS', value: 0, type: 'total', icon: 'IconPeople' },
+      ],
+      auditLogs: []
+    }
+  },
+  created() {
+    this.fetchStats();
+    this.fetchAuditLogs();
+  },
+  watch: {
+    activeNav(newVal) {
+      if (newVal === 'Dashboard') {
+        this.fetchStats();
+        this.fetchAuditLogs();
+      }
     }
   },
 methods: {
+    async fetchAuditLogs() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/v1/audit-logs`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          console.error("Failed to load audit logs:", data.message);
+          return;
+        }
+
+        this.auditLogs = data.logs;
+      } catch (error) {
+        console.error("Error fetching audit logs:", error);
+      }
+    },
+    async fetchStats() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/v1/applications/stats`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          console.error("Failed to load dashboard stats:", data.message);
+          return;
+        }
+
+        this.statCards = [
+          { label: 'Pending Review', value: data.pending, type: 'pending', icon: 'IconAlert' },
+          { label: 'APPROVED', value: data.approved, type: 'approved', icon: 'IconCheck' },
+          { label: 'RESUBMIT', value: data.resubmit, type: 'resubmit', icon: 'IconX' },
+          { label: 'TOTAL APPLICANTS', value: data.total, type: 'total', icon: 'IconPeople' },
+        ];
+      } catch (error) {
+        console.error("Error fetching dashboard stats:", error);
+      }
+    },
     async handleLogout() {
         try {
             const response = await fetch(
@@ -584,5 +651,65 @@ methods: {
   width: 100%;
   min-height: 280px;
   margin-top: 20px;
+  padding: 20px 24px;
+}
+
+.panel-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 14px;
+}
+
+.panel-empty {
+  font-size: 13px;
+  color: #999;
+  padding: 20px 0;
+}
+
+.audit-log-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.audit-log-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 4px;
+  border-bottom: 1px solid #f0f2f8;
+  font-size: 13px;
+}
+
+.audit-log-item:last-child {
+  border-bottom: none;
+}
+
+.audit-log-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.audit-log-dot.approved {
+  background: #22c55e;
+}
+
+.audit-log-dot.rejected {
+  background: #ef4444;
+}
+
+.audit-log-message {
+  flex: 1;
+  color: #1a1a2e;
+}
+
+.audit-log-date {
+  color: #999;
+  font-size: 12px;
+  flex-shrink: 0;
 }
 </style>

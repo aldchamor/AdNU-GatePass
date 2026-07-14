@@ -21,9 +21,9 @@
 
         <div class="table">
           <div class="table-row header-row">
-            <div class="col-id">ID</div>
             <div class="col-datetime">DATE / TIME</div>
             <div class="col-name">NAME</div>
+            <div class="col-status-header">STATUS</div>
             <div class="col-actions-header">ACTIONS</div>
           </div>
 
@@ -32,11 +32,9 @@
             :key="applicant.id"
             class="table-row data-row"
           >
-            <div class="col-id">{{ applicant.id }}</div>
             <div class="col-datetime">{{ applicant.date }}</div>
             <div class="col-name">{{ applicant.name }}</div>
-            <div class="col-actions">
-              <button class="action-btn view-btn" @click="viewApplicant(applicant)">VIEW</button>
+            <div class="col-status">
               <button
                 class="action-btn approve-btn"
                 :class="{ approved: applicant.status === 'Approved', rejected: applicant.status === 'Rejected' }"
@@ -44,7 +42,9 @@
               >
                 {{ applicant.status === 'Approved' ? 'APPROVED' : applicant.status === 'Rejected' ? 'REJECTED' : 'APPROVE' }}
               </button>
-              <button class="action-btn delete-btn" @click="deleteApplicant(applicant.id)">DELETE</button>
+            </div>
+            <div class="col-actions">
+              <button class="action-btn view-btn" @click="viewApplicant(applicant)">VIEW</button>
             </div>
           </div>
 
@@ -58,15 +58,6 @@
     <!-- ===================== DETAIL VIEW ===================== -->
     <template v-else>
       <div class="search-row detail-search-row">
-        <div class="search-pill">
-          <div class="search-icon-circle">
-            <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
-              <circle cx="7.5" cy="7.5" r="6" stroke="white" stroke-width="2"/>
-              <path d="M12 12l4 4" stroke="white" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          </div>
-          <input type="text" placeholder="Search here..." v-model="searchQuery" disabled />
-        </div>
         <button class="back-btn" @click="closeView">&larr; Back</button>
       </div>
 
@@ -138,6 +129,8 @@
 </template>
 
 <script>
+import { API_BASE_URL } from '../config/api.js'
+
 export default {
   name: 'ApplicantsView',
   data() {
@@ -145,60 +138,11 @@ export default {
       searchQuery: '',
       selectedApplicant: null,
       defaultAvatar: 'https://api.dicebear.com/7.x/initials/svg?seed=NA',
-      applicants: [
-        {
-          id: 2,
-          date: '2026-07-01 11:02 AM',
-          name: 'Miguel Torres',
-          status: 'Pending',
-          email: 'miguel.torres@example.com',
-          firstName: 'Miguel',
-          lastName: 'Torres',
-          contactNumber: '0928-555-7890',
-          affiliate: 'Logistics Partner',
-          vehicleType: 'Pickup Truck',
-          plateNumber: 'XYZ-5678',
-          yearModel: '2019 Ford Ranger',
-          driversLicense: 'N01-23-456789',
-          gatepassAccessType: 'Limited Access',
-          avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Miguel+Torres'
-        },
-        {
-          id: 3,
-          date: '2026-07-02 02:41 PM',
-          name: 'Ana Reyes',
-          status: 'Rejected',
-          email: 'ana.reyes@example.com',
-          firstName: 'Ana',
-          lastName: 'Reyes',
-          contactNumber: '0999-222-3344',
-          affiliate: 'Visitor',
-          vehicleType: 'Motorcycle',
-          plateNumber: 'MTR-9012',
-          yearModel: '2020 Honda Click',
-          driversLicense: '',
-          gatepassAccessType: 'Visitor',
-          avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Ana+Reyes'
-        },
-        {
-          id: 4,
-          date: '2026-07-02 04:15 PM',
-          name: 'David Lee',
-          status: 'Pending',
-          email: 'david.lee@example.com',
-          firstName: 'David',
-          lastName: 'Lee',
-          contactNumber: '0915-888-1122',
-          affiliate: 'Contractor',
-          vehicleType: 'Van',
-          plateNumber: 'VAN-3456',
-          yearModel: '2018 Nissan NV350',
-          driversLicense: 'N02-98-765432',
-          gatepassAccessType: 'Temporary',
-          avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=David+Lee'
-        }
-      ]
+      applicants: []
     }
+  },
+  created() {
+    this.fetchApplicants();
   },
   computed: {
     filteredApplicants() {
@@ -209,6 +153,24 @@ export default {
     }
   },
   methods: {
+    async fetchApplicants() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/v1/applications`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          console.error("Failed to load applicants:", data.message);
+          return;
+        }
+
+        this.applicants = data.applications.map(a => ({
+          ...a,
+          avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(a.name)}`
+        }));
+      } catch (error) {
+        console.error("Error fetching applicants:", error);
+      }
+    },
     viewApplicant(applicant) {
       // Ensure detail fields exist even if the source record doesn't have them yet
       const detailFields = [
@@ -227,15 +189,27 @@ export default {
       // Hook up to your API call here (e.g. this.$axios.put(...))
       this.closeView()
     },
-    toggleApprove(applicant) {
-      if (applicant.status === 'Approved') {
-        applicant.status = 'Rejected'
-      } else {
-        applicant.status = 'Approved'
+    async toggleApprove(applicant) {
+      const newStatus = applicant.status === 'Approved' ? 'Rejected' : 'Approved'
+      const previousStatus = applicant.status
+
+      applicant.status = newStatus // optimistic update
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/v1/applications/${applicant.id}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus })
+        });
+
+        if (!response.ok) {
+          applicant.status = previousStatus // roll back on failure
+          console.error('Failed to update application status');
+        }
+      } catch (error) {
+        applicant.status = previousStatus // roll back on failure
+        console.error('Error updating application status:', error);
       }
-    },
-    deleteApplicant(id) {
-      this.applicants = this.applicants.filter(a => a.id !== id)
     }
   }
 }
@@ -348,24 +322,11 @@ export default {
 }
 
 .table-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 160px 1fr 130px 110px;
   align-items: center;
   gap: 10px;
   width: 100%;
-}
-
-.col-id {
-  background: #fff;
-  border: 1.5px solid #d8dce8;
-  border-radius: 30px;
-  padding: 10px 0;
-  min-width: 60px;
-  max-width: 70px;
-  text-align: center;
-  font-size: 13px;
-  font-weight: 600;
-  color: #1a1a2e;
-  flex-shrink: 0;
 }
 
 .col-datetime {
@@ -373,13 +334,10 @@ export default {
   border: 1.5px solid #d8dce8;
   border-radius: 30px;
   padding: 10px 16px;
-  min-width: 130px;
-  max-width: 160px;
   text-align: center;
   font-size: 13px;
   font-weight: 600;
   color: #1a1a2e;
-  flex-shrink: 0;
 }
 
 .col-name {
@@ -387,40 +345,59 @@ export default {
   border: 1.5px solid #d8dce8;
   border-radius: 30px;
   padding: 10px 20px;
-  flex: 1;
   font-size: 13px;
   font-weight: 500;
   color: #1a1a2e;
   text-align: center;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .col-actions-header {
   background: #fff;
   border: 1.5px solid #d8dce8;
   border-radius: 30px;
-  padding: 10px 40px;
   font-size: 12.5px;
   font-weight: 700;
   letter-spacing: 0.3px;
   color: #555;
   text-align: center;
-  flex-shrink: 0;
+  padding: 10px 12px;
+box-sizing: border-box;
+width: 100%;
 }
 
 .col-actions {
   display: flex;
   gap: 8px;
-  flex-shrink: 0;
-  align-items: center;
+  width: 100%;
 }
 
-.header-row .col-id,
 .header-row .col-datetime,
 .header-row .col-name {
   font-weight: 700;
   font-size: 12.5px;
   letter-spacing: 0.3px;
   color: #555;
+}
+
+.col-status-header {
+  background: #fff;
+  border: 1.5px solid #d8dce8;
+  border-radius: 30px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #555;
+  text-align: center;
+  padding: 10px 12px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.col-status {
+  display: flex;
+  width: 100%;
 }
 
 .action-btn {
@@ -434,6 +411,13 @@ export default {
   transition: background 0.15s, color 0.15s, border-color 0.15s;
   letter-spacing: 0.3px;
   color: #333;
+}
+
+.col-status .action-btn,
+.col-actions .action-btn{
+  flex: 1;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .view-btn:hover {
@@ -455,12 +439,6 @@ export default {
 }
 
 .approve-btn.rejected {
-  background: #ef4444;
-  color: #fff;
-  border-color: #ef4444;
-}
-
-.delete-btn:hover {
   background: #ef4444;
   color: #fff;
   border-color: #ef4444;
