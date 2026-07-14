@@ -114,6 +114,7 @@
 <script>
 import { h } from 'vue'
 import ApplicantsView from './Applicants.vue'
+import { API_BASE_URL } from '../config/api.js'
 
 const IconDashboard = {
   render() {
@@ -264,7 +265,7 @@ methods: {
     async handleLogout() {
         try {
             const response = await fetch(
-                "http://localhost:4000/api/v1/accounts/logout",
+                `${API_BASE_URL}/api/v1/accounts/logout`,
                 {
                     method: "POST",
                     headers: {
