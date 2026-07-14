@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { API_BASE_URL } from "../config/api.js";
 
 const router = useRouter();
 
@@ -21,7 +22,7 @@ const handleLogin = async () => {
 
   try {
     const response = await fetch(
-      "http://localhost:4000/api/v1/accounts/login",
+      `${API_BASE_URL}/api/v1/accounts/login`,
       {
         method: "POST",
         headers: {
