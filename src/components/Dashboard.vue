@@ -442,6 +442,7 @@ methods: {
   align-items: center;
   gap: 10px;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 .user-text {
